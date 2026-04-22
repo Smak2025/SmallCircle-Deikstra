@@ -12,15 +12,15 @@ class Graph(
             fromVertex.forEachIndexed { colIndex, weight ->
                 if (weight > 1e-5)
                     add(Edge(
-                        getVertexById(rowIndex),
-                        getVertexById(colIndex),
+                        getVertexById(rowIndex)!!,
+                        getVertexById(colIndex)!!,
                         weight
                     ))
             }
         }
     }
 
-    fun getVertexById(id: Int) = vertices.find { it.id == id }!!
+    fun getVertexById(id: Int) = vertices.find { it.id == id }
 
     fun getUnvisitedVertexWithMinPathLength(): Vertex? =
         vertices.filter { !it.visited }.minByOrNull { it.minPathLength }
