@@ -5,4 +5,10 @@ data class Vertex(
     var minPathLength: Double = Double.POSITIVE_INFINITY,
     var cameFrom: Vertex? = null,
     var visited: Boolean = false
-)
+){
+    fun clear(){
+        visited = false
+        cameFrom = null
+        minPathLength = Double.POSITIVE_INFINITY
+    }
+}

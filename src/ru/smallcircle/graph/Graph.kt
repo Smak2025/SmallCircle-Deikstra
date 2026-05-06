@@ -25,6 +25,14 @@ class Graph(
     fun getUnvisitedVertexWithMinPathLength(): Vertex? =
         vertices.filter { !it.visited }.minByOrNull { it.minPathLength }
 
+    /**
+     * Поиск кратчайшего пути в графе
+     * @param fromVertex    вершина, от которой ищется путь в графе
+     * @param toVertex      вершина, до которой строится кратчайший путь
+     * @return  Список вершин в порядке от [fromVertex] до [toVertex]
+     * @throws  PathNotFoundException в случае если путь от [fromVertex] до
+     *          [toVertex] отсутствует
+     */
     fun findShortestPath(fromVertex: Vertex, toVertex: Vertex): List<Vertex> {
         val result = mutableListOf<Vertex>()
         fromVertex.minPathLength = 0.0
@@ -32,6 +40,7 @@ class Graph(
         do {
             vFrom = getUnvisitedVertexWithMinPathLength()
             vFrom?.let {
+                if (vFrom.minPathLength.isInfinite()) break
                 edges.filter { it.from == vFrom }.forEach { edge ->
                     if (edge.to.minPathLength > vFrom.minPathLength + edge.weight) {
                         edge.to.apply {
@@ -43,10 +52,48 @@ class Graph(
                 vFrom.visited = true
             }
         } while (vFrom != null)
-        result.add(toVertex)
-        while (result.last().cameFrom != null) {
-            result.add(result.last().cameFrom!!)
-        }
+        toVertex.cameFrom?.let{
+            result.add(toVertex.copy())
+            while (result.last().cameFrom != null) {
+                result.add(result.last().cameFrom!!.copy())
+            }
+        } ?: throw PathNotFoundException("Path not found")
         return result.reversed()
+    }
+
+    fun findShortestPathWithIntermediates(
+        fromVertex: Vertex,
+        toVertex: Vertex,
+        intermediates: List<Vertex>,
+    ): List<Vertex> {
+        val inter = intermediates.toSet().filter { v -> v != fromVertex && v != toVertex }.toMutableList()
+        var from = fromVertex
+        var to: Vertex
+        val result = mutableListOf<Vertex>()
+        for (v in inter) {
+            to = v
+            result.addAll(findShortestPath(from, to))
+            result.removeLastOrNull()
+            inter.removeAll{ v -> result.any { v.id == it.id } }
+            from = to
+            reset()
+        }
+        result.addAll(findShortestPath(from, toVertex))
+        return result
+    }
+
+    fun getResultLength(result: List<Vertex>) = result.foldIndexed(0.0) { index, acc, vertex ->
+        acc + (if (index < result.size - 1) {
+            val from = vertex
+            val to = result[index + 1]
+            val edge = edges.find { it.from.id == from.id && it.to.id == to.id }
+            edge?.weight ?: 0.0
+        }
+        else 0.0)
+    }
+
+
+    fun reset(){
+        vertices.forEach { v -> v.clear() }
     }
 }
